@@ -3,7 +3,6 @@ package com.example.praktam_2317051067
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +28,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,11 +44,17 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import com.example.praktam_2317051067.R
 import com.example.praktam_2317051067.model.Buku
 import com.example.praktam_2317051067.model.BukuSource
+import com.example.praktam_2317051067.model.RetrofitClient
 import com.example.praktam_2317051067.ui.theme.BookNestTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val BUKU_API_URL =
+    "PASTE_LINK_RAW_GIST_DI_SINI"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,13 +70,46 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BookNestNavigation() {
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
+
+    var daftarBuku by remember { mutableStateOf<List<Buku>>(emptyList()) }
+    var isLoadingData by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    suspend fun loadBuku() {
+        isLoadingData = true
+
+        try {
+            daftarBuku = RetrofitClient.apiService.getBuku(BUKU_API_URL)
+            errorMessage = null
+        } catch (e: Exception) {
+            daftarBuku = BukuSource.daftarBuku
+            errorMessage = "Data dari server gagal dimuat"
+        }
+
+        isLoadingData = false
+    }
+
+    LaunchedEffect(Unit) {
+        loadBuku()
+    }
 
     NavHost(
         navController = navController,
         startDestination = "home"
     ) {
         composable("home") {
-            BookNestScreen(navController = navController)
+            BookNestScreen(
+                navController = navController,
+                daftarBuku = daftarBuku,
+                isLoadingData = isLoadingData,
+                errorMessage = errorMessage,
+                onRefresh = {
+                    scope.launch {
+                        loadBuku()
+                    }
+                }
+            )
         }
 
         composable("detail/{index}") { backStackEntry ->
@@ -78,6 +117,7 @@ fun BookNestNavigation() {
 
             DetailBukuScreen(
                 index = index,
+                daftarBuku = daftarBuku,
                 navController = navController
             )
         }
@@ -85,9 +125,13 @@ fun BookNestNavigation() {
 }
 
 @Composable
-fun BookNestScreen(navController: NavController) {
-    val daftarBuku = BukuSource.daftarBuku
-
+fun BookNestScreen(
+    navController: NavController,
+    daftarBuku: List<Buku>,
+    isLoadingData: Boolean,
+    errorMessage: String?,
+    onRefresh: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -101,31 +145,74 @@ fun BookNestScreen(navController: NavController) {
         )
 
         Text(
-            text = "Pilih buku yang ingin kamu baca detailnya.",
+            text = "Daftar buku tersedia dan bisa dimuat ulang dari server.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Daftar Buku",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Button(
+            onClick = onRefresh,
+            enabled = !isLoadingData,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
-            itemsIndexed(daftarBuku) { index, buku ->
-                ItemBuku(
-                    buku = buku,
-                    onDetailClick = {
-                        navController.navigate("detail/$index")
-                    }
+            Text(text = "Muat Ulang Buku")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isLoadingData) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Memuat data buku...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+        } else {
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            Text(
+                text = "Daftar Buku",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                itemsIndexed(daftarBuku) { index, buku ->
+                    ItemBuku(
+                        buku = buku,
+                        onDetailClick = {
+                            navController.navigate("detail/$index")
+                        }
+                    )
+                }
             }
         }
     }
@@ -150,13 +237,13 @@ fun ItemBuku(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            AsyncImage(
+                model = buku.imageUrl,
                 contentDescription = buku.judul,
-                modifier = Modifier
-                    .size(95.dp)
-                    .background(MaterialTheme.colorScheme.secondary),
-                contentScale = ContentScale.Crop
+                modifier = Modifier.size(95.dp),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                error = painterResource(id = R.drawable.ic_launcher_foreground)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -206,10 +293,12 @@ fun ItemBuku(
 @Composable
 fun DetailBukuScreen(
     index: Int,
+    daftarBuku: List<Buku>,
     navController: NavController
 ) {
-    val daftarBuku = BukuSource.daftarBuku
-    val buku = daftarBuku.getOrElse(index) { daftarBuku[0] }
+    val buku = daftarBuku.getOrElse(index) {
+        BukuSource.daftarBuku[0]
+    }
 
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -225,14 +314,15 @@ fun DetailBukuScreen(
                 .fillMaxSize()
                 .padding(18.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            AsyncImage(
+                model = buku.imageUrl,
                 contentDescription = buku.judul,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
-                    .background(MaterialTheme.colorScheme.secondary),
-                contentScale = ContentScale.Crop
+                    .height(240.dp),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                error = painterResource(id = R.drawable.ic_launcher_foreground)
             )
 
             Spacer(modifier = Modifier.height(18.dp))

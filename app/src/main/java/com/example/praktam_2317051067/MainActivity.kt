@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -31,21 +32,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.praktam_2317051067.model.Buku
 import com.example.praktam_2317051067.model.BukuSource
+import com.example.praktam_2317051067.ui.theme.BookNestTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            BookNestTheme {
                 BookNestScreen()
             }
         }
@@ -68,29 +67,27 @@ fun BookNestScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F2E8))
+            .background(MaterialTheme.colorScheme.background)
             .padding(18.dp)
     ) {
         Text(
             text = "BookNest",
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF4E342E)
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
             text = "Temukan buku pilihan sesuai kategori favoritmu.",
-            fontSize = 14.sp,
-            color = Color(0xFF6D4C41)
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
         Text(
             text = "Kategori",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF4E342E)
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -102,7 +99,11 @@ fun BookNestScreen() {
                 Button(
                     onClick = {
                         kategoriDipilih = kategori
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
                     Text(text = kategori)
                 }
@@ -113,9 +114,8 @@ fun BookNestScreen() {
 
         Text(
             text = "Daftar Buku",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF4E342E)
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -137,7 +137,7 @@ fun ItemBuku(buku: Buku) {
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -151,7 +151,7 @@ fun ItemBuku(buku: Buku) {
                 contentDescription = buku.judul,
                 modifier = Modifier
                     .size(95.dp)
-                    .background(Color(0xFFD7CCC8)),
+                    .background(MaterialTheme.colorScheme.secondary),
                 contentScale = ContentScale.Crop
             )
 
@@ -162,37 +162,42 @@ fun ItemBuku(buku: Buku) {
             ) {
                 Text(
                     text = buku.judul,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3E2723)
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = "Penulis: ${buku.penulis}",
-                    fontSize = 13.sp,
-                    color = Color(0xFF5D4037)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
                     text = "Kategori: ${buku.kategori}",
-                    fontSize = 13.sp,
-                    color = Color(0xFF5D4037)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
                     text = "Tahun: ${buku.tahun}",
-                    fontSize = 13.sp,
-                    color = Color(0xFF5D4037)
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Button(onClick = { }) {
+                Button(
+                    onClick = { },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
                     Text(
                         text = "Lihat Detail",
-                        fontSize = 12.sp
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -203,7 +208,7 @@ fun ItemBuku(buku: Buku) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewBookNestScreen() {
-    MaterialTheme {
+    BookNestTheme {
         BookNestScreen()
     }
-}
+}w

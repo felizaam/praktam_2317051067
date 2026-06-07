@@ -2,10 +2,10 @@ package com.example.praktam_2317051067.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val BookPrimary = Color(0xFF5D4037)
+val BookSecondary = Color(0xFF8D6E63)
+val BookBackground = Color(0xFFF7F2E8)
+val BookSurface = Color(0xFFFFFFFF)
+val BookOnPrimary = Color(0xFFFFFFFF)
+val BookOnBackground = Color(0xFF3E2723)
+val BookOnSurface = Color(0xFF4E342E)

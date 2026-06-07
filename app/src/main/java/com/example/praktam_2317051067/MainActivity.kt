@@ -16,8 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,16 +25,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.praktam_2317051067.model.Buku
 import com.example.praktam_2317051067.model.BukuSource
 import com.example.praktam_2317051067.ui.theme.BookNestTheme
@@ -45,24 +44,38 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BookNestTheme {
-                BookNestScreen()
+                BookNestNavigation()
             }
         }
     }
 }
 
 @Composable
-fun BookNestScreen() {
-    val daftarBuku = BukuSource.daftarBuku
-    val kategoriList = listOf("Semua", "Novel Sejarah", "Fantasi", "Pengembangan Diri")
+fun BookNestNavigation() {
+    val navController = rememberNavController()
 
-    var kategoriDipilih by remember { mutableStateOf("Semua") }
+    NavHost(
+        navController = navController,
+        startDestination = "home"
+    ) {
+        composable("home") {
+            BookNestScreen(navController = navController)
+        }
 
-    val bukuTampil = if (kategoriDipilih == "Semua") {
-        daftarBuku
-    } else {
-        daftarBuku.filter { it.kategori == kategoriDipilih }
+        composable("detail/{index}") { backStackEntry ->
+            val index = backStackEntry.arguments?.getString("index")?.toIntOrNull() ?: 0
+
+            DetailBukuScreen(
+                index = index,
+                navController = navController
+            )
+        }
     }
+}
+
+@Composable
+fun BookNestScreen(navController: NavController) {
+    val daftarBuku = BukuSource.daftarBuku
 
     Column(
         modifier = Modifier
@@ -77,38 +90,10 @@ fun BookNestScreen() {
         )
 
         Text(
-            text = "Temukan buku pilihan sesuai kategori favoritmu.",
+            text = "Pilih buku yang ingin kamu baca detailnya.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Text(
-            text = "Kategori",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(kategoriList) { kategori ->
-                Button(
-                    onClick = {
-                        kategoriDipilih = kategori
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text(text = kategori)
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(18.dp))
 
@@ -123,15 +108,23 @@ fun BookNestScreen() {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(bukuTampil) { buku ->
-                ItemBuku(buku = buku)
+            itemsIndexed(daftarBuku) { index, buku ->
+                ItemBuku(
+                    buku = buku,
+                    onDetailClick = {
+                        navController.navigate("detail/$index")
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun ItemBuku(buku: Buku) {
+fun ItemBuku(
+    buku: Buku,
+    onDetailClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -180,16 +173,10 @@ fun ItemBuku(buku: Buku) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Text(
-                    text = "Tahun: ${buku.tahun}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { },
+                    onClick = onDetailClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -205,10 +192,87 @@ fun ItemBuku(buku: Buku) {
     }
 }
 
+@Composable
+fun DetailBukuScreen(
+    index: Int,
+    navController: NavController
+) {
+    val daftarBuku = BukuSource.daftarBuku
+    val buku = daftarBuku.getOrElse(index) { daftarBuku[0] }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(18.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+            contentDescription = buku.judul,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .background(MaterialTheme.colorScheme.secondary),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
+            text = buku.judul,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Penulis: ${buku.penulis}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            text = "Kategori: ${buku.kategori}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            text = "Tahun Terbit: ${buku.tahun}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Buku ini menjadi salah satu pilihan yang cocok untuk menambah wawasan dan mengisi waktu luang dengan bacaan yang menarik.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(22.dp))
+
+        Button(
+            onClick = {
+                navController.popBackStack()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(text = "Kembali")
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
-fun PreviewBookNestScreen() {
+fun PreviewBookNestNavigation() {
     BookNestTheme {
-        BookNestScreen()
+        BookNestNavigation()
     }
 }

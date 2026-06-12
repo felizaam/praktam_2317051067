@@ -1,5 +1,6 @@
-package com.example.praktam_2317051067.model
+package com.example.praktam_2317051067.data.api
 
+import com.example.praktam_2317051067.data.model.Buku
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET

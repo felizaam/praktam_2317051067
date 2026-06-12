@@ -1,4 +1,4 @@
-package com.example.praktam_2317051067.model
+package com.example.praktam_2317051067.data.model
 
 object BukuSource {
 
